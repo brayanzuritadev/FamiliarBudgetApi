@@ -1,7 +1,12 @@
-﻿using FamiliarBudgetApi.BLL;
-using FamiliarBudgetApi.BLL.DTOs;
-using FamiliarBudgetApi.DAL.Models;
+﻿using FamiliarBudgetApi.Data.DTOs;
+using FamiliarBudgetApi.Data.Models;
+using FamiliarBudgetApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 namespace FamiliarBudgetApi.Controllers
 {
@@ -10,33 +15,35 @@ namespace FamiliarBudgetApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService userService;
-        public UsersController(IUserService bll)
+        private readonly ILoginService lservice;
+
+        public UsersController(IUserService userService)
         {
-            this.userService = bll;
+
+            this.userService = userService;
+        }
+
+        [HttpGet]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(Roles = ("1"))]
+        public ActionResult<User> GetAll()
+        {
+            var users =userService.GetAll();
+
+            return Ok(users);
         }
 
         [HttpPost]
-        public ActionResult Post(UserDTO user)
+        public ActionResult<AuthenticationResponse> Post(UserDTO user)
         {
-            var userDB = userService.Insert(user);
-            if (userDB == null)
+            
+            var tokenUserCreate = userService.Insert(user);
+            if (tokenUserCreate == null)
             {
                 return BadRequest("Could not create user");
             };
             
-            return Ok(userDB);
-        }
-
-
-        [HttpGet]
-        public ActionResult<List<UserDTO>> GetAll(string family) {
-            return userService.GetAll(family);
-        }
-
-        [HttpGet("{familyCode}/{id:int}", Name="getUser")]
-        public ActionResult<UserDTO> Get(string familyCode,int id)
-        {
-            return null;
+            return Ok(new { response = tokenUserCreate });
         }
     }
 }

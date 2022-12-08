@@ -1,11 +1,12 @@
-﻿using FamiliarBudgetApi.BLL;
-using FamiliarBudgetApi.BLL.DTOs;
-using FamiliarBudgetApi.BusinessLogicalLayer.Validation;
-using FamiliarBudgetApi.DAL.DAO;
-using FamiliarBudgetApi.DAL.Models;
-using FamiliarBudgetApi.DataAccessLayer.ContextDB;
-using FamiliarBudgetApi.DataAccessLayer.DAO;
+﻿using FamiliarBudgetApi.Data.DataAccess;
+using FamiliarBudgetApi.Data.DTOs;
+using FamiliarBudgetApi.Services;
+using FamiliarBudgetApi.Services.Validation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace FamiliarBudgetApi
 {
@@ -21,15 +22,49 @@ namespace FamiliarBudgetApi
         public void ConfigureServices(IServiceCollection services)
         {
             //in this place are the services
+            services.AddHttpContextAccessor();
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IUserDAO, UserDAO>();
             services.AddTransient<IFamilyDAO, FamilyDAO>();
             services.AddTransient<IValidator<UserDTO>, UserValidator>();
+            services.AddTransient<ILoginService, LoginService>();
+            services.AddTransient<ILoginDAO,LoginDAO>();
             services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidAudience = Configuration["jwt:audience"],
+                    ValidIssuer = Configuration["jwt:issuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["jwt:key"]))
+                };
+            });
+            
+            
             services.AddControllers();
-            services.AddScoped<UserService>();
-            services.AddEndpointsApiExplorer();
+
+             services.AddEndpointsApiExplorer();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
+                });
+            });
+
+            //i f
+            services.AddIdentity<IdentityUser,IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
             services.AddSwaggerGen();
 
         }
@@ -46,6 +81,8 @@ namespace FamiliarBudgetApi
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
