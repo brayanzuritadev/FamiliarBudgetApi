@@ -2,33 +2,36 @@
 using FamiliarBudgetApi.Data.DTOs;
 using FamiliarBudgetApi.Data.Models;
 using FamiliarBudgetApi.Services.Validation;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace FamiliarBudgetApi.Services
 {
     public class UserService : IUserService
     {
-        private readonly IValidator<UserDTO> userValidator;
+        private readonly IValidation validation;
         private readonly ILoginService loginService;
         private readonly IUserDAO userDao;
         private readonly IFamilyDAO familyDao;
 
-        public UserService(IUserDAO userDao, IFamilyDAO familyDao, IValidator<UserDTO> UserValidator, ILoginService loginService)
+        public UserService(IUserDAO userDao, IFamilyDAO familyDao, IValidation Validation, ILoginService loginService)
         {
             this.userDao = userDao;
             this.familyDao = familyDao;
-            this.userValidator = UserValidator;
+            this.validation = Validation;
             this.loginService = loginService;
         }
 
-
-        public bool Delete(User user)
+        public bool Delete(int id)
         {
-            throw new NotImplementedException();
+            return GetUserById(id) == null || !userDao.Delete(id) ? false : true;
+
+            /*
+            if (GetUserById(id) == null || !userDao.Delete(id))
+            {
+                return false;
+            }
+
+            return true;
+            */
         }
 
         public List<UserDTO> GetAll()
@@ -41,12 +44,16 @@ namespace FamiliarBudgetApi.Services
             
         }
 
+        public UserDTO GetUserById(int id)
+        {
+            return userDao.GetUserById(id);
+        }
+
         public string Insert(UserDTO userDTO)
         {
-
             User user = new User();
 
-            if (!userValidator.Validate(userDTO))
+            if (!validation.Validate(userDTO))
             {
                 return null;
             }
@@ -67,22 +74,31 @@ namespace FamiliarBudgetApi.Services
             user.RoleId = userDTO.RoleId;
             user.FamilyId = familyDao.GetFamily(userDTO.FamilyCode).ID;
 
+            // TODO: Move this session initializacion to the controller
             if (userDao.Insert(user))
             {
-                var token = loginService.Login(user);
+                var token = loginService.Login(userDTO);
                 return token;
             }
             else
             {
                 return null;
             }
-
         }
 
-        
-        public bool Update(User user)
+        public bool UpdateUser(UserDTO userDto)
         {
-            throw new NotImplementedException();
+            var family = validation.ValidateFamilyCode(userDto.FamilyCode);
+            var role = validation.ValidateRole(userDto.RoleId);
+
+            if (family == null || role == false || GetUserById(userDto.ID) == null)
+            {
+                return false;
+            }
+            
+            userDto.FamilyId = family.ID;
+
+            return userDao.UpdateUser(userDto);
         }
     }
 }

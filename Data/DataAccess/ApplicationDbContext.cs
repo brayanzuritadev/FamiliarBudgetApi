@@ -15,5 +15,6 @@ namespace FamiliarBudgetApi.Data.DataAccess
         public DbSet<User> User { get; set; }
         public DbSet<Family> Family { get; set; }
         public DbSet<Role> Role { get; set; }
+        public DbSet<Transaction> Transaction { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using FamiliarBudgetApi.Data.DTOs;
 
 namespace FamiliarBudgetApi.Services
 {
@@ -20,7 +21,8 @@ namespace FamiliarBudgetApi.Services
             this.configuration = configuration;
             this.contextAccessor = contextAccessor;
         }
-        public string Login(User userLogin)
+
+        public string Login(UserDTO userLogin)
         {
             var user = loginDb.GetByEmailAndPassword(userLogin);
 
@@ -31,7 +33,7 @@ namespace FamiliarBudgetApi.Services
             return null;
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(UserDTO user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["jwt:key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -39,6 +41,7 @@ namespace FamiliarBudgetApi.Services
             var claims = new[]
             {
                 new Claim("ID",user.ID.ToString()),
+                new Claim("FamilyCode",user.FamilyCode.ToString()),
                 new Claim("FamilyId",user.FamilyId.ToString()),
                 new Claim(ClaimTypes.Role,user.RoleId.ToString())
             };
@@ -50,22 +53,18 @@ namespace FamiliarBudgetApi.Services
                 expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: credentials
                 );
-            
+
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public User GetCurrentUser(HttpContext currentUser)
-        {
-            var current = currentUser.User.Identity as ClaimsIdentity;
-            return null;
-        }
-        public User GetCurrentUser()
+        public UserDTO GetCurrentUser()
         {
             var current = contextAccessor.HttpContext.User.Identity as ClaimsIdentity;
 
-            var user = new User
+            var user = new UserDTO
             {
-                RoleId = Int32.Parse(current.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value),
+                FamilyCode = current.Claims.FirstOrDefault(x => x.Type == "FamilyCode").Value,
+                RoleId = Int32.Parse(current.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value),
                 FamilyId = Int32.Parse(current.Claims.FirstOrDefault(x => x.Type == "FamilyId").Value),
             };
             return user;

@@ -9,8 +9,9 @@ namespace FamiliarBudgetApi.Data.DataAccess
     {
         public List<UserDTO> GetAll(int familtId);
         public bool Insert(User user);
-        public bool Update(User user);
-        public bool Delete(User user);
-        public bool SearchByEmail(string email);
+        public bool UpdateUser(UserDTO user);
+        public bool Delete(int id);
+        public bool SearchUserByEmail(string email);
+        public UserDTO GetUserById(int id);
     }
 }

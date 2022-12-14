@@ -26,9 +26,13 @@ namespace FamiliarBudgetApi
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IUserDAO, UserDAO>();
             services.AddTransient<IFamilyDAO, FamilyDAO>();
-            services.AddTransient<IValidator<UserDTO>, UserValidator>();
+            services.AddTransient<IValidation, Validation>();
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<ILoginDAO,LoginDAO>();
+            services.AddTransient<ITransactionDAO, TransactionDAO>();
+            services.AddTransient<ITransactionService, TransactionService>();
+            services.AddTransient<IUserValidator, UserValidator>();
+
             services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 

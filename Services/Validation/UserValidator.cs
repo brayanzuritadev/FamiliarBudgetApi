@@ -1,12 +1,9 @@
 ﻿using FamiliarBudgetApi.Data.DataAccess;
 using FamiliarBudgetApi.Data.DTOs;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
 
 namespace FamiliarBudgetApi.Services.Validation
 {
-    public class UserValidator : IValidator<UserDTO>
+    public class UserValidator : IUserValidator
     {
         private readonly IFamilyDAO familyDao;
         private readonly IUserDAO userDao;
@@ -15,30 +12,31 @@ namespace FamiliarBudgetApi.Services.Validation
             this.familyDao = familyDao;
             this.userDao = userDao;
         }
+
+        /// <summary>
+        /// Checks the user consistency by verifying:
+        /// - The user role is correct
+        /// - The family code of the user is correct
+        /// - The user exists
+        /// </summary>
         public bool Validate(UserDTO validationObject)
         {
-            var family = familyDao.GetFamily(validationObject.FamilyCode);
-
-            //verificamos que el rol este dentro de lo requerido
-            if (validationObject.RoleId == 2 && family == null)
+            if (validationObject.RoleId > 2 || validationObject.RoleId < 0)
             {
                 return false;
             }
 
-            if (validationObject.RoleId < 1 || validationObject.RoleId > 2)
+            if (familyDao.GetFamily(validationObject.FamilyCode) == null)
             {
                 return false;
             }
 
-            //verificamos que el email no este registrado dentro de la base de datos
-            var exist = userDao.SearchByEmail(validationObject.Email);
-            if (exist)
+            if (userDao.GetUserById(validationObject.ID) == null)
             {
                 return false;
-            }    
+            }
 
             return true;
         }
-
     }
 }

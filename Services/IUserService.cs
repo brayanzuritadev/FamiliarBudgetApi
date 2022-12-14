@@ -7,7 +7,8 @@ namespace FamiliarBudgetApi.Services
     {
         public List<UserDTO> GetAll();
         public string Insert(UserDTO user);
-        public bool Update(User user);
-        public bool Delete(User user);
+        public bool UpdateUser(UserDTO user);
+        public bool Delete(int id);
+        public UserDTO GetUserById(int id);
     }
 }

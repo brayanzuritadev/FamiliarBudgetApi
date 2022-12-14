@@ -1,4 +1,5 @@
-﻿using FamiliarBudgetApi.Data.Models;
+﻿using FamiliarBudgetApi.Data.DTOs;
+using FamiliarBudgetApi.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FamiliarBudgetApi.Data.DataAccess
@@ -11,18 +12,36 @@ namespace FamiliarBudgetApi.Data.DataAccess
             this.context = context;
         }
 
-        public User GetByEmailAndPassword(User userLogin)
+        public UserDTO GetByEmailAndPassword(UserDTO userLogin)
         {
-            var user = context.User.FirstOrDefault(x=> x.Email.ToLower()==userLogin.Email.ToLower()
-                && x.Password==userLogin.Password);
+            UserDTO userDto = new UserDTO();
+            var userDba = (from u in context.User.Where(x => x.Email == userLogin.Email && x.Password==userLogin.Password)
+                           join f in context.Family on u.FamilyId equals f.ID
+                           join r in context.Role on u.RoleId equals r.ID
+                           select new
+                           {
+                               userId = u.ID,
+                               firstName = u.FirstName,
+                               lastName = u.LastName,
+                               email = u.Email,
+                               role = r.RoleName,
+                               familyCode = f.FamilyCode,
+                               familyId = f.ID,
+                               roleId = r.ID
+                           }).ToList();
 
-            if (user != null)
+            if (userDba.Count != 0)
             {
-                User userFound = new User();
-                userFound.ID = user.ID;
-                userFound.RoleId = user.RoleId;
-                userFound.FamilyId = user.FamilyId;
-                return user;
+                var user = userDba.FirstOrDefault();
+                userDto.ID = user.userId;
+                userDto.FirstName = user.firstName;
+                userDto.LastName = user.lastName;
+                userDto.Email = user.email;
+                userDto.RoleId = user.roleId;
+                userDto.RoleName = user.role;
+                userDto.FamilyId = user.familyId;
+                userDto.FamilyCode = user.familyCode;
+                return userDto;
             }
             return null;
         }

@@ -1,11 +1,12 @@
 ﻿
+using FamiliarBudgetApi.Data.DTOs;
 using FamiliarBudgetApi.Data.Models;
 
 namespace FamiliarBudgetApi.Services
 {
     public interface ILoginService
     {
-        public User GetCurrentUser();
-        public string Login(User userLogin);
+        public UserDTO GetCurrentUser();
+        public string Login(UserDTO userLogin);
     }
 }

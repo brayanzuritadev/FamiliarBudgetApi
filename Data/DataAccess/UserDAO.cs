@@ -1,6 +1,11 @@
 ﻿using FamiliarBudgetApi.Data.DTOs;
 using FamiliarBudgetApi.Data.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks.Dataflow;
 
 namespace FamiliarBudgetApi.Data.DataAccess
 {
@@ -17,9 +22,11 @@ namespace FamiliarBudgetApi.Data.DataAccess
             this.userManager = userManager;
         }
 
-        public bool Delete(User entity)
+        public bool Delete(int id)
         {
-            throw new NotImplementedException();
+            context.Remove(new User() { ID = id });
+            context.SaveChanges();
+            return true;
         }
 
         public List<UserDTO> GetAll(int familyId)
@@ -56,7 +63,7 @@ namespace FamiliarBudgetApi.Data.DataAccess
             return users;
         }
 
-        public bool SearchByEmail(string email)
+        public bool SearchUserByEmail(string email)
         {
             var exist = context.User.Any(x=>x.Email==email);
             if (exist)
@@ -81,9 +88,54 @@ namespace FamiliarBudgetApi.Data.DataAccess
             }
         }
 
-        public bool Update(User entity)
+
+        public UserDTO GetUserById(int id)
         {
-            throw new NotImplementedException();
+
+                UserDTO userDto = new UserDTO();
+                var userDba = (from u in context.User.Where(x => x.ID == id)
+                               join f in context.Family on u.FamilyId equals f.ID
+                               join r in context.Role on u.RoleId equals r.ID
+                               select new
+                               {
+                                   userId = u.ID,
+                                   firstName = u.FirstName,
+                                   lastName = u.LastName,
+                                   email = u.Email,
+                                   role = r.RoleName,
+                                   familyCode = f.FamilyCode,
+                                   familyId = f.ID,
+                                   roleId = r.ID
+                               }).ToList();
+
+                if (userDba.Count!=0) {
+                    var user = userDba.FirstOrDefault();
+                    userDto.ID = user.userId;
+                    userDto.FirstName = user.firstName;
+                    userDto.LastName = user.lastName;
+                    userDto.Email = user.email;
+                    userDto.RoleId = user.roleId;
+                    userDto.RoleName = user.role;
+                    userDto.FamilyId = user.familyId;
+                    userDto.FamilyCode = user.familyCode;
+                    return userDto;
+                }
+                return null;
+        }
+
+        public bool UpdateUser(UserDTO userDto)
+        {
+            User user = new User();
+            user.ID = userDto.ID;
+            user.FirstName = userDto.FirstName;
+            user.LastName = userDto.LastName;
+            user.Email = userDto.Email;
+            user.RoleId = userDto.RoleId;
+            user.FamilyId= userDto.FamilyId;
+            user.Password= userDto.Password;
+            context.User.Update(user);
+            context.SaveChanges();
+            return true;
         }
     }
 }

@@ -1,9 +1,10 @@
-﻿using FamiliarBudgetApi.Data.Models;
+﻿using FamiliarBudgetApi.Data.DTOs;
+using FamiliarBudgetApi.Data.Models;
 
 namespace FamiliarBudgetApi.Data.DataAccess
 {
     public interface ILoginDAO
     {
-        public User GetByEmailAndPassword(User userLogin);
+        public UserDTO GetByEmailAndPassword(UserDTO userLogin);
     }
 }

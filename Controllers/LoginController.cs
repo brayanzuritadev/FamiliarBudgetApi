@@ -1,4 +1,5 @@
 ﻿
+using FamiliarBudgetApi.Data.DTOs;
 using FamiliarBudgetApi.Data.Models;
 using FamiliarBudgetApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ namespace FamiliarBudgetApi.Controllers
 
 
         [HttpPost]
-        public ActionResult<string> Login(User user)
+        public ActionResult<string> Login(UserDTO user)
         {
             var token = service.Login(user);
             if (token==null)
